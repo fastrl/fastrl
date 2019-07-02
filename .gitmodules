@@ -1,0 +1,8 @@
+[submodule "DeepRL-Agents"]
+	path = DeepRL-Agents
+	url = git@github.com:awjuliani/DeepRL-Agents.git
+	branch = master
+[submodule "gym"]
+	path = gym
+	url = git@github.com:openai/gym.git
+	branch = master
