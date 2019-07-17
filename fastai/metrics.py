@@ -60,6 +60,9 @@ def dice(input:Tensor, targs:Tensor, iou:bool=False, eps:float=1e-8)->Rank0Tenso
     if not iou: return (2. * intersect / union if union > 0 else union.new([1.]).squeeze())
     else: return (intersect / (union-intersect+eps) if union > 0 else union.new([1.]).squeeze())
 
+def psnr(input:Tensor, targs:Tensor)->Rank0Tensor:
+    return 10 * (1. / mean_squared_error(input, targs)).log10()
+
 def exp_rmspe(pred:Tensor, targ:Tensor)->Rank0Tensor:
     "Exp RMSE between `pred` and `targ`."
     pred,targ = flatten_check(pred,targ)
@@ -271,7 +274,7 @@ class Perplexity(Callback):
         return add_metrics(last_metrics, torch.exp(self.loss / self.len))
 
 def auc_roc_score(input:Tensor, targ:Tensor):
-    "Using trapezoid method to calculate the area under roc curve"
+    "Computes the area under the receiver operator characteristic (ROC) curve using the trapezoid method. Restricted binary classification tasks."
     fpr, tpr = roc_curve(input, targ)
     d = fpr[1:] - fpr[:-1]
     sl1, sl2 = [slice(None)], [slice(None)]
@@ -279,7 +282,7 @@ def auc_roc_score(input:Tensor, targ:Tensor):
     return (d * (tpr[tuple(sl1)] + tpr[tuple(sl2)]) / 2.).sum(-1)
 
 def roc_curve(input:Tensor, targ:Tensor):
-    "Returns the false positive and true positive rates"
+    "Computes the receiver operator characteristic (ROC) curve by determining the true positive ratio (TPR) and false positive ratio (FPR) for various classification thresholds. Restricted binary classification tasks."
     targ = (targ == 1)
     desc_score_indices = torch.flip(input.argsort(-1), [-1])
     input = input[desc_score_indices]
@@ -297,7 +300,7 @@ def roc_curve(input:Tensor, targ:Tensor):
 
 @dataclass
 class AUROC(Callback):
-    "Calculates the auc score based on the roc curve. Restricted to the binary classification task."
+    "Computes the area under the curve (AUC) score based on the receiver operator characteristic (ROC) curve. Restricted to binary classification tasks."
     def on_epoch_begin(self, **kwargs):
         self.targs, self.preds = LongTensor([]), Tensor([])
         

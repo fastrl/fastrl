@@ -258,7 +258,7 @@ class Learner():
         return self.data.dl(ds_type)
 
     def load(self, file:PathLikeOrBinaryStream=None, device:torch.device=None, strict:bool=True,
-             with_opt:bool=None, purge:bool=True, remove_module:bool=False):
+             with_opt:bool=None, purge:bool=False, remove_module:bool=False):
         "Load model and optimizer state (if `with_opt`) `file` from `self.model_dir` using `device`. `file` can be file-like (file or buffer)"
         if purge: self.purge(clear_opt=ifnone(with_opt, False))
         if device is None: device = self.data.device
@@ -328,12 +328,13 @@ class Learner():
         gc.collect()
         return self
 
-    def get_preds(self, ds_type:DatasetType=DatasetType.Valid, with_loss:bool=False, n_batch:Optional[int]=None,
-                  pbar:Optional[PBar]=None) -> List[Tensor]:
+    def get_preds(self, ds_type:DatasetType=DatasetType.Valid, activ:nn.Module=None,
+                  with_loss:bool=False, n_batch:Optional[int]=None, pbar:Optional[PBar]=None) -> List[Tensor]:
         "Return predictions and targets on `ds_type` dataset."
         lf = self.loss_func if with_loss else None
+        activ = ifnone(activ, _loss_func2activ(self.loss_func))
         return get_preds(self.model, self.dl(ds_type), cb_handler=CallbackHandler(self.callbacks),
-                         activ=_loss_func2activ(self.loss_func), loss_func=lf, n_batch=n_batch, pbar=pbar)
+                         activ=activ, loss_func=lf, n_batch=n_batch, pbar=pbar)
 
     def pred_batch(self, ds_type:DatasetType=DatasetType.Valid, batch:Tuple=None, reconstruct:bool=False, with_dropout:bool=False) -> List[Tensor]:
         "Return output of the model on one batch from `ds_type` dataset."
@@ -380,7 +381,7 @@ class Learner():
         dl = ifnone(dl, self.data.valid_dl)
         metrics = ifnone(metrics, self.metrics)
         cb_handler = CallbackHandler(self.callbacks + ifnone(callbacks, []), metrics)
-        cb_handler.on_epoch_begin()
+        cb_handler.on_train_begin(1, None, metrics); cb_handler.on_epoch_begin()
         val_metrics = validate(self.model, dl, self.loss_func, cb_handler)
         cb_handler.on_epoch_end(val_metrics)
         return cb_handler.state_dict['last_metrics']
