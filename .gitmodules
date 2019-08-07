@@ -6,3 +6,9 @@
 	path = gym
 	url = git@github.com:openai/gym.git
 	branch = master
+[submodule "horizonrl"]
+	path = horizonrl
+	url = git@github.com:facebookresearch/Horizon.git
+[submodule "slm-lab"]
+	path = slm-lab
+	url = git@github.com:kengz/SLM-Lab.git
