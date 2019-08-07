@@ -50,7 +50,6 @@ sidebar_d = {
                 'vision.gan': '/vision.gan',
                 'vision.model overview': '/vision.models',
                 'vision.models.unet': '/vision.models.unet',
-                'widgets.image_cleaner': '/widgets.image_cleaner'
             }
         },
         'empty1': {
@@ -69,6 +68,12 @@ sidebar_d = {
                 'tabular.transform': '/tabular.transform',
                 'tabular.data': '/tabular.data',
                 'tabular.models': '/tabular.models'
+            },
+        },
+        'empty3': {
+            'widgets': {
+                'widgets.class_confusion': '/widgets.class_confusion',
+                'widgets.image_cleaner': '/widgets.image_cleaner'
             },
         },
         'collab': '/collab',

@@ -68,6 +68,7 @@ class RNNLearner(Learner):
         if hasattr(encoder, 'module'): encoder = encoder.module
         encoder.load_state_dict(torch.load(self.path/self.model_dir/f'{name}.pth', map_location=device))
         self.freeze()
+        return self
 
     def load_pretrained(self, wgts_fname:str, itos_fname:str, strict:bool=True):
         "Load a pretrained model and adapts it to the data vocabulary."
@@ -77,6 +78,7 @@ class RNNLearner(Learner):
         if 'model' in wgts: wgts = wgts['model']
         wgts = convert_weights(wgts, old_stoi, self.data.train_ds.vocab.itos)
         self.model.load_state_dict(wgts, strict=strict)
+        return self
 
     def get_preds(self, ds_type:DatasetType=DatasetType.Valid, activ:nn.Module=None, with_loss:bool=False, n_batch:Optional[int]=None,
                   pbar:Optional[PBar]=None, ordered:bool=False) -> List[Tensor]:
@@ -116,7 +118,6 @@ class LanguageLearner(RNNLearner):
     def predict(self, text:str, n_words:int=1, no_unk:bool=True, temperature:float=1., min_p:float=None, sep:str=' ',
                 decoder=decode_spec_tokens):
         "Return the `n_words` that come after `text`."
-        ds = self.data.single_dl.dataset
         self.model.reset()
         xb,yb = self.data.one_item(text)
         new_idx = []
@@ -137,7 +138,6 @@ class LanguageLearner(RNNLearner):
     def beam_search(self, text:str, n_words:int, no_unk:bool=True, top_k:int=10, beam_sz:int=1000, temperature:float=1.,
                     sep:str=' ', decoder=decode_spec_tokens):
         "Return the `n_words` that come after `text` using beam search."
-        ds = self.data.single_dl.dataset
         self.model.reset()
         self.model.eval()
         xb, yb = self.data.one_item(text)
@@ -214,7 +214,7 @@ def language_model_learner(data:DataBunch, arch, config:dict=None, drop_mult:flo
                 return learn
             model_path = untar_data(meta[url] , data=False)
             fnames = [list(model_path.glob(f'*.{ext}'))[0] for ext in ['pth', 'pkl']]
-        learn.load_pretrained(*fnames)
+        learn = learn.load_pretrained(*fnames)
         learn.freeze()
     return learn
 
@@ -298,6 +298,6 @@ def text_classifier_learner(data:DataBunch, arch:Callable, bptt:int=70, max_len:
             return learn
         model_path = untar_data(meta['url'], data=False)
         fnames = [list(model_path.glob(f'*.{ext}'))[0] for ext in ['pth', 'pkl']]
-        learn.load_pretrained(*fnames, strict=False)
+        learn = learn.load_pretrained(*fnames, strict=False)
         learn.freeze()
     return learn
